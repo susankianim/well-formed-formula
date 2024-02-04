@@ -1,53 +1,56 @@
 class WFF {
-    constructor(latexInfixStatement) {
-        this.operators = { not: "¬", and: "∧", or: "∨", arrow: "⟶" };
-        this.infixStatement = this.ConvertFromLatex(latexInfixStatement)
-        this.postfixStatement = this.postfix(this.infixStatement)
+    constructor(latexStr) {
+        this.latexStr = latexStr;
+        this.operators = ["\\neg", "\\wedge", "\\vee", "\\rightarrow"];
     }
 
-    getOperator(object, value) {
-        return Object.keys(object).find(key => object[key] === value);
+    tokenize() {
+        let str = this.latexStr.replace(/\s/g, "")
+            .replaceAll("\\neg", "¬")
+            .replaceAll("\\wedge", '∧')
+            .replaceAll("\\vee", '∨')
+            .replaceAll("\\rightarrow", "⟶");
+
+        const symbole = {
+            '¬': "\\neg",
+            '∧': "\\wedge",
+            '∨': "\\vee",
+            '⟶': "\\rightarrow",
+        };
+
+        let arr = str.split("").map(x => symbole[x] ? symbole[x] : x);
+        return (arr);
     }
 
     lessPrecedence(op1, op2) {
         if (op2 == "(") return false
-        return Object.keys(this.operators).indexOf(op1) > Object.keys(this.operators).indexOf(op2)
+        return this.operators.indexOf(op1) > this.operators.indexOf(op2)
     }
 
-    ConvertFromLatex(latexStatement) {
-        return latexStatement.replace(/\s/g, "")
-            .replaceAll("\\wedge", this.operators.and)
-            .replaceAll("\\vee", this.operators.or)
-            .replaceAll("\\rightarrow", this.operators.arrow)
-            .replaceAll("\\neg", this.operators.not);
-    }
-
-    postfix(str) {
+    postfix() {
+        let tokensArr = this.tokenize(this.latexStr);
         let operatorsStack = [];
         let output = [];
         let i;
-        for (i = 0; i < str.length; i++) {
-            let c = str[i]
+        for (i = 0; i < tokensArr.length; i++) {
+            let token = tokensArr[i]
 
-            let operator = this.getOperator(this.operators, c)
-            if (operator) {
-                let topStack = operatorsStack[operatorsStack.length - 1];
-                while (topStack && this.lessPrecedence(operator, topStack)) {
+            if (this.operators.includes(token)) {
+                let topStack;
+                while ((topStack = operatorsStack[operatorsStack.length - 1]) && this.lessPrecedence(token, topStack)) {
                     output.push(operatorsStack.pop());
-                    topStack = operatorsStack[operatorsStack.length - 1];
                 }
-                operatorsStack.push(operator)
-            } else if (c == '(') {
-                operatorsStack.push(c)
-            } else if (c == ')') {
-                let topStack = operatorsStack[operatorsStack.length - 1];
-                while (topStack && topStack != '(') {
+                operatorsStack.push(token)
+            } else if (token == '(') {
+                operatorsStack.push(token)
+            } else if (token == ')') {
+                let topStack;
+                while ((topStack = operatorsStack[operatorsStack.length - 1]) && topStack != '(') {
                     output.push(operatorsStack.pop());
-                    topStack = operatorsStack[operatorsStack.length - 1];
                 }
                 operatorsStack.pop()
             } else {
-                output.push(c)
+                output.push(token)
             }
         }
 
@@ -61,5 +64,6 @@ class WFF {
 }
 
 let wff = new WFF("( \\neg 𝑝 \\wedge 𝑞 \\rightarrow 𝑝 \\wedge ( 𝑟 \\rightarrow 𝑞))")
-console.log(wff.postfixStatement.map(x => wff.operators[x] ? wff.operators[x] : x).join(""));
+console.log(wff.postfix().join(""));
 // 𝑝¬𝑞∧𝑝𝑟𝑞⟶∧⟶
+// 𝑝\neg𝑞\wedge𝑝𝑟𝑞\rightarrow\wedge\rightarrow
