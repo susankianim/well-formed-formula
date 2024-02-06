@@ -142,159 +142,182 @@ class Formula {
         return termStack[0]
     }
 
-    getFormula(node) {
-        if (node.symbol == "\\vee") {
-            return "(" + this.getFormula(node.children[0]) + " \\vee " + this.getFormula(node.children[1]) + ")";
-        } else if (node.symbol == "\\rightarrow") {
-            return "(" + this.getFormula(node.children[0]) + " \\rightarrow " + this.getFormula(node.children[1]) + ")";
-        } else if (node.symbol == "\\wedge") {
-            return "(" + this.getFormula(node.children[0]) + " \\wedge " + this.getFormula(node.children[1]) + ")";
-        } else if (node.symbol == "\\neg") {
-            return " \\neg " + this.getFormula(node.children[0]);
-        } else {
-            return node.symbol;
-        }
-    }
+    getCnfFormula() {
+        let cnf = this.CNF();
+        return getFormula_(cnf);
 
-    implFree(node) {
-        if (node.symbol == "\\rightarrow") {
-            return {
-                symbol: "\\vee",
-                children: [
-                    {
-                        symbol: "\\neg",
-                        children: [this.implFree(node.children[0])],
-                    },
-                    this.implFree(node.children[1])
-                ],
-            };
-        } else if (node.symbol == "\\vee") {
-            return {
-                symbol: "\\vee",
-                children: [
-                    this.implFree(node.children[0]),
-                    this.implFree(node.children[1])
-                ],
-            };
-        } else if (node.symbol == "\\wedge") {
-            return {
-                symbol: "\\wedge",
-                children: [
-                    this.implFree(node.children[0]),
-                    this.implFree(node.children[1])
-                ],
-            };
-        } else if (node.symbol == "\\neg") {
-            return {
-                symbol: "\\neg",
-                children: [
-                    this.implFree(node.children[0]),
-                ],
-            };
-        } else {
-            return node
-        }
-    }
-
-    NNF(node) {
-        if (node.symbol == "\\neg" && node.children[0].symbol == "\\neg") {
-            return this.NNF(node.children[0].children[0])
-        } else if (node.symbol == "\\wedge") {
-            return {
-                symbol: "\\wedge",
-                children: [
-                    this.NNF(node.children[0]),
-                    this.NNF(node.children[1]),
-                ],
-            };
-        } else if (node.symbol == "\\vee") {
-            return {
-                symbol: "\\vee",
-                children: [
-                    this.NNF(node.children[0]),
-                    this.NNF(node.children[1]),
-                ],
-            };
-        } else if (node.symbol == "\\neg" && node.children[0].symbol == "\\wedge") {
-            return {
-                symbol: "\\vee",
-                children: [
-                    this.NNF({
-                        symbol: "\\neg",
-                        children: [
-                            this.NNF(node.children[0].children[0]),
-                        ],
-                    }),
-                    this.NNF({
-                        symbol: "\\neg",
-                        children: [
-                            this.NNF(node.children[0].children[1]),
-                        ],
-                    })
-                ],
-            };
-        } else if (node.symbol == "\\neg" && node.children[0].symbol == "\\vee") {
-            return {
-                symbol: "\\wedge",
-                children: [
-                    this.NNF({
-                        symbol: "\\neg",
-                        children: [
-                            this.NNF(node.children[0].children[0]),
-                        ],
-                    }),
-                    this.NNF({
-                        symbol: "\\neg",
-                        children: [
-                            this.NNF(node.children[0].children[1]),
-                        ],
-                    })
-                ],
-            };
-        } else {
-            return node;
-        }
-    }
-
-    distr(node1, node2) {
-        if (node1.symbol == "\\wedge") {
-            return {
-                symbol: "\\wedge",
-                children: [
-                    this.distr(node1.children[0], node2),
-                    this.distr(node1.children[1], node2),
-                ],
+        function getFormula_(node) {
+            if (node.symbol == "\\vee") {
+                return "(" + getFormula_(node.children[0]) + " \\vee " + getFormula_(node.children[1]) + ")";
+            } else if (node.symbol == "\\rightarrow") {
+                return "(" + getFormula_(node.children[0]) + " \\rightarrow " + getFormula_(node.children[1]) + ")";
+            } else if (node.symbol == "\\wedge") {
+                return "(" + getFormula_(node.children[0]) + " \\wedge " + getFormula_(node.children[1]) + ")";
+            } else if (node.symbol == "\\neg") {
+                return " \\neg " + getFormula_(node.children[0]);
+            } else {
+                return node.symbol;
             }
-        } else if (node2.symbol == "\\wedge") {
-            return {
-                symbol: "\\wedge",
-                children: [
-                    this.distr(node1, node2.children[0]),
-                    this.distr(node1, node2.children[1]),
-                ],
-            }
-        } else {
-            return {
-                symbol: "\\vee",
-                children: [node1, node2],
-            };
         }
     }
 
-    CNF(node) {
-        if (node.symbol == "\\wedge") {
-            return {
-                symbol: "\\wedge",
-                children: [
-                    this.CNF(node.children[0]),
-                    this.CNF(node.children[1]),
-                ],
+    implFree() {
+        let tree = this.getParseTree();
+        return implFree_(tree);
+
+        function implFree_(node) {
+            if (node.symbol == "\\rightarrow") {
+                return {
+                    symbol: "\\vee",
+                    children: [
+                        {
+                            symbol: "\\neg",
+                            children: [implFree_(node.children[0])],
+                        },
+                        implFree_(node.children[1])
+                    ],
+                };
+            } else if (node.symbol == "\\vee") {
+                return {
+                    symbol: "\\vee",
+                    children: [
+                        implFree_(node.children[0]),
+                        implFree_(node.children[1])
+                    ],
+                };
+            } else if (node.symbol == "\\wedge") {
+                return {
+                    symbol: "\\wedge",
+                    children: [
+                        implFree_(node.children[0]),
+                        implFree_(node.children[1])
+                    ],
+                };
+            } else if (node.symbol == "\\neg") {
+                return {
+                    symbol: "\\neg",
+                    children: [
+                        implFree_(node.children[0]),
+                    ],
+                };
+            } else {
+                return node
             }
-        } else if (node.symbol == "\\vee") {
-            return this.distr(this.CNF(node.children[0]), this.CNF(node.children[1]));
-        } else {
-            return node;
         }
+    }
+
+    NNF() {
+        let implFreeTree = this.implFree();
+        return NNF_(implFreeTree)
+
+        function NNF_(node) {
+            if (node.symbol == "\\neg" && node.children[0].symbol == "\\neg") {
+                return NNF_(node.children[0].children[0])
+            } else if (node.symbol == "\\wedge") {
+                return {
+                    symbol: "\\wedge",
+                    children: [
+                        NNF_(node.children[0]),
+                        NNF_(node.children[1]),
+                    ],
+                };
+            } else if (node.symbol == "\\vee") {
+                return {
+                    symbol: "\\vee",
+                    children: [
+                        NNF_(node.children[0]),
+                        NNF_(node.children[1]),
+                    ],
+                };
+            } else if (node.symbol == "\\neg" && node.children[0].symbol == "\\wedge") {
+                return {
+                    symbol: "\\vee",
+                    children: [
+                        NNF_({
+                            symbol: "\\neg",
+                            children: [
+                                NNF_(node.children[0].children[0]),
+                            ],
+                        }),
+                        NNF_({
+                            symbol: "\\neg",
+                            children: [
+                                NNF_(node.children[0].children[1]),
+                            ],
+                        })
+                    ],
+                };
+            } else if (node.symbol == "\\neg" && node.children[0].symbol == "\\vee") {
+                return {
+                    symbol: "\\wedge",
+                    children: [
+                        NNF_({
+                            symbol: "\\neg",
+                            children: [
+                                NNF_(node.children[0].children[0]),
+                            ],
+                        }),
+                        NNF_({
+                            symbol: "\\neg",
+                            children: [
+                                NNF_(node.children[0].children[1]),
+                            ],
+                        })
+                    ],
+                };
+            } else {
+                return node;
+            }
+        }
+    }
+
+    CNF() {
+        let nnfTree = this.NNF();
+        return CNF_(nnfTree)
+
+        function CNF_(node) {
+            if (node.symbol == "\\wedge") {
+                return {
+                    symbol: "\\wedge",
+                    children: [
+                        CNF_(node.children[0]),
+                        CNF_(node.children[1]),
+                    ],
+                }
+            } else if (node.symbol == "\\vee") {
+                return distr(CNF_(node.children[0]), CNF_(node.children[1]));
+            } else {
+                return node;
+            }
+        }
+
+        function distr(node1, node2) {
+            {
+                if (node1.symbol == "\\wedge") {
+                    return {
+                        symbol: "\\wedge",
+                        children: [
+                            distr(node1.children[0], node2),
+                            distr(node1.children[1], node2),
+                        ],
+                    }
+                } else if (node2.symbol == "\\wedge") {
+                    return {
+                        symbol: "\\wedge",
+                        children: [
+                            distr(node1, node2.children[0]),
+                            distr(node1, node2.children[1]),
+                        ],
+                    }
+                } else {
+                    return {
+                        symbol: "\\vee",
+                        children: [node1, node2],
+                    };
+                }
+            }
+        }
+
     }
 }
 
