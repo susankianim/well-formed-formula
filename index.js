@@ -1,1 +1,1 @@
-export * from "./wff.js";
+export * from "./formula.js";

@@ -18,8 +18,9 @@ class Formula {
 
     isWellFormed() {
         let statement = this.tokenize();
+        let atoms = [...new Set(statement.filter(x => !this.operators.includes(x)))]
         let grammer = {
-            E: [["EArrow", "E"], ["EOr", "E"], ["EAnd", "E"], ["Not", "E"], ["OpenE", "Close"], ["p"], ["q"], ["r"]],
+            E: [["EArrow", "E"], ["EOr", "E"], ["EAnd", "E"], ["Not", "E"], ["OpenE", "Close"], atoms],
             EArrow: [["E", "Arrow"]],
             EOr: [["E", "Or"]],
             EAnd: [["E", "And"]],
@@ -140,15 +141,162 @@ class Formula {
         }
         return termStack[0]
     }
+
+    getFormula(node) {
+        if (node.symbol == "\\vee") {
+            return "(" + this.getFormula(node.children[0]) + " \\vee " + this.getFormula(node.children[1]) + ")";
+        } else if (node.symbol == "\\rightarrow") {
+            return "(" + this.getFormula(node.children[0]) + " \\rightarrow " + this.getFormula(node.children[1]) + ")";
+        } else if (node.symbol == "\\wedge") {
+            return "(" + this.getFormula(node.children[0]) + " \\wedge " + this.getFormula(node.children[1]) + ")";
+        } else if (node.symbol == "\\neg") {
+            return " \\neg " + this.getFormula(node.children[0]);
+        } else {
+            return node.symbol;
+        }
+    }
+
+    implFree(node) {
+        if (node.symbol == "\\rightarrow") {
+            return {
+                symbol: "\\vee",
+                children: [
+                    {
+                        symbol: "\\neg",
+                        children: [this.implFree(node.children[0])],
+                    },
+                    this.implFree(node.children[1])
+                ],
+            };
+        } else if (node.symbol == "\\vee") {
+            return {
+                symbol: "\\vee",
+                children: [
+                    this.implFree(node.children[0]),
+                    this.implFree(node.children[1])
+                ],
+            };
+        } else if (node.symbol == "\\wedge") {
+            return {
+                symbol: "\\wedge",
+                children: [
+                    this.implFree(node.children[0]),
+                    this.implFree(node.children[1])
+                ],
+            };
+        } else if (node.symbol == "\\neg") {
+            return {
+                symbol: "\\neg",
+                children: [
+                    this.implFree(node.children[0]),
+                ],
+            };
+        } else {
+            return node
+        }
+    }
+
+    NNF(node) {
+        if (node.symbol == "\\neg" && node.children[0].symbol == "\\neg") {
+            return this.NNF(node.children[0].children[0])
+        } else if (node.symbol == "\\wedge") {
+            return {
+                symbol: "\\wedge",
+                children: [
+                    this.NNF(node.children[0]),
+                    this.NNF(node.children[1]),
+                ],
+            };
+        } else if (node.symbol == "\\vee") {
+            return {
+                symbol: "\\vee",
+                children: [
+                    this.NNF(node.children[0]),
+                    this.NNF(node.children[1]),
+                ],
+            };
+        } else if (node.symbol == "\\neg" && node.children[0].symbol == "\\wedge") {
+            return {
+                symbol: "\\vee",
+                children: [
+                    this.NNF({
+                        symbol: "\\neg",
+                        children: [
+                            this.NNF(node.children[0].children[0]),
+                        ],
+                    }),
+                    this.NNF({
+                        symbol: "\\neg",
+                        children: [
+                            this.NNF(node.children[0].children[1]),
+                        ],
+                    })
+                ],
+            };
+        } else if (node.symbol == "\\neg" && node.children[0].symbol == "\\vee") {
+            return {
+                symbol: "\\wedge",
+                children: [
+                    this.NNF({
+                        symbol: "\\neg",
+                        children: [
+                            this.NNF(node.children[0].children[0]),
+                        ],
+                    }),
+                    this.NNF({
+                        symbol: "\\neg",
+                        children: [
+                            this.NNF(node.children[0].children[1]),
+                        ],
+                    })
+                ],
+            };
+        } else {
+            return node;
+        }
+    }
+
+    distr(node1, node2) {
+        if (node1.symbol == "\\wedge") {
+            return {
+                symbol: "\\wedge",
+                children: [
+                    this.distr(node1.children[0], node2),
+                    this.distr(node1.children[1], node2),
+                ],
+            }
+        } else if (node2.symbol == "\\wedge") {
+            return {
+                symbol: "\\wedge",
+                children: [
+                    this.distr(node1, node2.children[0]),
+                    this.distr(node1, node2.children[1]),
+                ],
+            }
+        } else {
+            return {
+                symbol: "\\vee",
+                children: [node1, node2],
+            };
+        }
+    }
+
+    CNF(node) {
+        if (node.symbol == "\\wedge") {
+            return {
+                symbol: "\\wedge",
+                children: [
+                    this.CNF(node.children[0]),
+                    this.CNF(node.children[1]),
+                ],
+            }
+        } else if (node.symbol == "\\vee") {
+            return this.distr(this.CNF(node.children[0]), this.CNF(node.children[1]));
+        } else {
+            return node;
+        }
+    }
 }
 
-
-let wff = new Formula("( \\neg p \\wedge q \\rightarrow p \\wedge ( r \\rightarrow q))")
-try {
-    console.log(wff.isWellFormed());
-    console.log(JSON.stringify(wff.getParseTree(), null, 2))
-    
-} catch (error) {
-    console.log(error.message);
-}
+export { Formula };
 
