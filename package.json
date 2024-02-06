@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/susankianim/well-formed-formula/issues"
   },
-  "homepage": "https://github.com/susankianim/well-formed-formula#readme"
+  "homepage": "https://github.com/susankianim/well-formed-formula#readme",
+  "dependencies": {
+    "esbuild": "^0.20.0",
+    "esbuild-plugin-polyfill-node": "^0.3.0"
+  }
 }
