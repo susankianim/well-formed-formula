@@ -142,9 +142,24 @@ class Formula {
         return termStack[0]
     }
 
-    getCnfFormula() {
-        let cnf = this.CNF();
-        return getFormula_(cnf);
+    getFormula(form) {
+        let node;
+        switch (form) {
+            case "implFree":
+                node = this.implFree();
+                break;
+            case "NNF":
+                node = this.NNF();
+                break;
+            case "CNF":
+                node = this.CNF();
+                break;
+
+            default:
+                node = this.getParseTree()
+                break;
+        }
+        return getFormula_(node);
 
         function getFormula_(node) {
             if (node.symbol == "\\vee") {
