@@ -5,7 +5,7 @@ function solve(latexStr) {
         let isWellFormed = f.isWellFormed();
         let cnfFormula;
         if (isWellFormed) {
-            cnfFormula = f.getFormula()
+            cnfFormula = f.getFormula("CNF")
         }
         return { isWellFormed, cnfFormula }
     } catch (error) {

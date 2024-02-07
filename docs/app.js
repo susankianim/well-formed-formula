@@ -141,11 +141,11 @@
       return getFormula_(node);
       function getFormula_(node2) {
         if (node2.symbol == "\\vee") {
-          return "(" + getFormula_(node2.children[0]) + " \\vee " + getFormula_(node2.children[1]) + ")";
+          return "" + getFormula_(node2.children[0]) + " \\vee " + getFormula_(node2.children[1]);
         } else if (node2.symbol == "\\rightarrow") {
           return "(" + getFormula_(node2.children[0]) + " \\rightarrow " + getFormula_(node2.children[1]) + ")";
         } else if (node2.symbol == "\\wedge") {
-          return "(" + getFormula_(node2.children[0]) + " \\wedge " + getFormula_(node2.children[1]) + ")";
+          return "(" + getFormula_(node2.children[0]) + ") \\wedge (" + getFormula_(node2.children[1]) + ")";
         } else if (node2.symbol == "\\neg") {
           return " \\neg " + getFormula_(node2.children[0]);
         } else {
@@ -313,7 +313,7 @@
       let isWellFormed = f.isWellFormed();
       let cnfFormula;
       if (isWellFormed) {
-        cnfFormula = f.getFormula();
+        cnfFormula = f.getFormula("CNF");
       }
       return { isWellFormed, cnfFormula };
     } catch (error) {
