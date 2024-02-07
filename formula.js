@@ -163,11 +163,11 @@ class Formula {
 
         function getFormula_(node) {
             if (node.symbol == "\\vee") {
-                return "(" + getFormula_(node.children[0]) + " \\vee " + getFormula_(node.children[1]) + ")";
+                return "" + getFormula_(node.children[0]) + " \\vee " + getFormula_(node.children[1]) + "";
             } else if (node.symbol == "\\rightarrow") {
                 return "(" + getFormula_(node.children[0]) + " \\rightarrow " + getFormula_(node.children[1]) + ")";
             } else if (node.symbol == "\\wedge") {
-                return "(" + getFormula_(node.children[0]) + " \\wedge " + getFormula_(node.children[1]) + ")";
+                return "(" + getFormula_(node.children[0]) + ")" + " \\wedge " + "(" + getFormula_(node.children[1]) + ")";
             } else if (node.symbol == "\\neg") {
                 return " \\neg " + getFormula_(node.children[0]);
             } else {
